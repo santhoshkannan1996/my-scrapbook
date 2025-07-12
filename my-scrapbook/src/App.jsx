@@ -5,13 +5,14 @@ import Home from './components/Home';
 import PrivateRoute from './components/PrivateRoute';
 import NavigationBar from './components/NavigationBar';
 import FriendsList from './components/FriendsList';
+import ProfileSettings from './components/ProfileSettings';
 // import Write from './components/Write'; // Uncomment if you have a Write component
 
 // Layout for private pages
 const PrivateLayout = ({ children }) => (
   <>
     <NavigationBar />
-    <div className="pt-4">
+    <div className="pt-20"> {/* Increased padding for navbar */}
       {children}
     </div>
   </>
@@ -40,6 +41,16 @@ function App() {
               <PrivateRoute>
                 <PrivateLayout>
                   <FriendsList />
+                </PrivateLayout>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <PrivateRoute>
+                <PrivateLayout>
+                  <ProfileSettings />
                 </PrivateLayout>
               </PrivateRoute>
             } 

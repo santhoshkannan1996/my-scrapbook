@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import SendMessage from './SendMessage';
 
 const FriendsList = () => {
@@ -19,26 +19,28 @@ const FriendsList = () => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!currentUser) {
+  const fetchFriends = async (user) => {
+    if (!user) {
       setFriends([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError('');
-    const fetchFriends = async () => {
-      try {
-        const friendsRef = collection(db, 'users', currentUser.uid, 'friends');
-        const snapshot = await getDocs(friendsRef);
-        const friendsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setFriends(friendsList);
-      } catch (err) {
-        setError('Error fetching friends: ' + err.message);
-      }
-      setLoading(false);
-    };
-    fetchFriends();
+    try {
+      const friendsRef = collection(db, 'users', user.uid, 'friends');
+      const snapshot = await getDocs(friendsRef);
+      const friendsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFriends(friendsList);
+    } catch (err) {
+      setError('Error fetching friends: ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchFriends(currentUser);
+    // eslint-disable-next-line
   }, [currentUser]);
 
   const openModal = (friend) => {
@@ -51,10 +53,21 @@ const FriendsList = () => {
     setSelectedFriend(null);
   };
 
+  const toggleFavorite = async (friend) => {
+    if (!currentUser) return;
+    try {
+      const friendRef = doc(db, 'users', currentUser.uid, 'friends', friend.id);
+      await updateDoc(friendRef, { favorite: !friend.favorite });
+      setFriends(friends.map(f => f.id === friend.id ? { ...f, favorite: !friend.favorite } : f));
+    } catch (err) {
+      alert('Failed to update favorite: ' + err.message);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[100px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-pink-200 via-purple-200 to-yellow-100">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
         <span className="ml-4 text-gray-600">Loading friends...</span>
       </div>
     );
@@ -69,33 +82,41 @@ const FriendsList = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-4 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">My Friends</h2>
-      {friends.length === 0 ? (
-        <div className="text-gray-500">No friends found.</div>
-      ) : (
-        <ul className="space-y-2">
-          {friends.map(friend => (
-            <li key={friend.id} className="border-b pb-2 flex items-center justify-between">
-              <div>
-                <div className="text-gray-800 font-medium">
-                  {friend.displayName || friend.email}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-pink-200 via-purple-200 to-yellow-100 pt-20 pb-8 px-2">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 tracking-tight">My Friends</h2>
+        {friends.length === 0 ? (
+          <div className="text-gray-500 text-center">No friends found.</div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {friends.map(friend => (
+              <li key={friend.id} className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    className={`text-2xl focus:outline-none ${friend.favorite ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                    title={friend.favorite ? 'Remove from favorites' : 'Add to favorites'}
+                    onClick={() => toggleFavorite(friend)}
+                  >
+                    {friend.favorite ? '★' : '☆'}
+                  </button>
+                  <div>
+                    <div className="text-gray-900 font-semibold text-lg">{friend.displayName || friend.email}</div>
+                    {friend.email && (
+                      <div className="text-gray-500 text-sm">{friend.email}</div>
+                    )}
+                  </div>
                 </div>
-                {friend.email && (
-                  <div className="text-gray-600 text-sm">{friend.email}</div>
-                )}
-              </div>
-              <button
-                className="ml-2 bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm"
-                onClick={() => openModal(friend)}
-              >
-                Send Message
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
+                <button
+                  className="ml-2 bg-gradient-to-tr from-pink-500 to-yellow-400 text-white px-4 py-2 rounded-lg font-semibold shadow hover:from-pink-600 hover:to-yellow-500 transition text-sm"
+                  onClick={() => openModal(friend)}
+                >
+                  Send Message
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {/* Modal Dialog */}
       {showModal && selectedFriend && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
