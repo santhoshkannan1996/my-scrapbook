@@ -21,12 +21,13 @@ import {
 // Your Firebase configuration
 // Replace these placeholder values with your actual Firebase config
 const firebaseConfig = {
-  apiKey: "your-api-key-here",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCB0qzkED7QV3-PJT3Jp3Y5sqBVFfAnEOM",
+  authDomain: "my-scrapbook-4f701.firebaseapp.com",
+  projectId: "my-scrapbook-4f701",
+  storageBucket: "my-scrapbook-4f701.firebasestorage.app",
+  messagingSenderId: "541759460237",
+  appId: "1:541759460237:web:58c6e5c7fd2785191423c4",
+  measurementId: "G-C53BZJH605"
 };
 
 // Initialize Firebase
